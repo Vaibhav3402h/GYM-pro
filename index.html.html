@@ -34,30 +34,30 @@ const fd=s=>P(s).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'n
 const ru=n=>'₹'+Number(n||0).toLocaleString('en-IN');
 const wa=(p,t)=>'https://wa.me/91'+String(p).replace(/\D/g,'').slice(-10)+'?text='+encodeURIComponent(t);
 const td=ymd(T());
-const SUPPORT='919999900000'; /* apna WhatsApp number yahan likhein (91 ke saath) */
-/* ===== CONFIG: yahan apni details likhein ===== */
-const SUPA_URL='https://supabase.co'; /* BADLEIN: apne project ka URL, jaise https://abcd1234.supabase.co */
+const SUPPORT='919999900000'; /* Your support WhatsApp number, with country code 91 */
+/* ===== CONFIG ===== */
+const SUPA_URL='https://lyblaeherzdsyvgefjtc.supabase.co';
 const SUPA_KEY='sb_publishable_kuBFGLUkbsDHRnOGJzU3lA_wkcu8LLH';
-const UPI_ID='yourupi@bank'; /* BADLEIN: apna UPI ID */
+const UPI_ID='yourupi@bank'; /* Replace with your real UPI ID */
 const upi='upi://pay?pa='+UPI_ID+'&pn=GymPro&am=999&cu=INR';
 const use=(k,d)=>{const[v,s]=useState(()=>{try{const x=localStorage.getItem('gp_'+k);return x?JSON.parse(x):d}catch(e){return d}});const set=f=>s(p=>{const n=typeof f==='function'?f(p):f;try{localStorage.setItem('gp_'+k,JSON.stringify(n))}catch(e){}return n});return[v,set]};
-const Landing=({onDemo})=>{const cta=wa(SUPPORT,'Namaste, mujhe apne gym ke liye GymPro ka 7 din free trial chahiye.');
- const F=[['💬','WhatsApp reminder','Ek click mein fees aur expiry ka message, member ke naam ke saath.'],['🚪','Gate par rokein','ID daalte hi dikhta hai: Access Granted ya Denied.'],['🧾','Digital receipt','Fees lete hi receipt banayein aur WhatsApp par bhejein.'],['📝','Walk-in leads','Jo rates puchhne aaye, unka follow-up kabhi miss na ho.'],['📊','Roz ka hisaab','Kitne member active, kitni fees baaki, kaun expire hone wala hai.'],['📈','Body progress','Weight aur BMI ka record, member ka motivation.']];
- const Pl=[['Basic','₹499',['Members aur fees ka record','WhatsApp fee reminder','Digital receipt'],false],['Pro','₹999',['Basic ka sab kuch','Gate QR check-in','Walk-in leads aur follow-up','Body progress aur BMI','Priority WhatsApp support'],true]];
+const Landing=({onDemo})=>{const cta=wa(SUPPORT,'Hello, I would like a 7-day free trial of GymPro for my gym.');
+ const F=[['💬','WhatsApp reminders','One click sends a fee or expiry message with the member’s name.'],['🚪','Gate check-in','Enter an ID and instantly see Access Granted or Denied.'],['🧾','Digital receipts','Create a receipt when you collect fees and send it on WhatsApp.'],['📝','Walk-in leads','Never miss a follow-up with people who ask about your rates.'],['📊','Daily overview','See active members, pending fees and who is about to expire.'],['📈','Body progress','Keep weight and BMI records to keep members motivated.']];
+ const Pl=[['Basic','₹499',['Member and fee records','WhatsApp fee reminder','Digital receipt'],false],['Pro','₹999',['Everything in Basic','Gate QR check-in','Walk-in leads and follow-ups','Body progress and BMI','Priority WhatsApp support'],true]];
  return h`<div className="max-w-4xl mx-auto px-4 pb-16">
  <div className="flex justify-between items-center py-4"><div className="font-extrabold text-xl text-orange-500">GymPro</div><a className="text-sm underline" target="_blank" rel="noopener" href=${cta}>Free trial</a></div>
- <section className="py-10 sm:py-16"><h1 className="text-4xl sm:text-6xl font-extrabold leading-tight">Fees ka hisaab apne aap.<br/>Gym hamesha bhara hua.</h1>
- <p className="mt-4 text-lg text-neutral-300 max-w-xl">Kaun si membership kab expire ho rahi hai, kiski fees baaki hai, aur kisko WhatsApp bhejna hai. Sab ek app mein, Hindi aur English mein, seedha mobile par.</p>
- <div className="flex gap-3 mt-6 flex-wrap"><button onClick=${onDemo} className="bg-orange-600 px-5 py-3 rounded-xl font-bold text-lg">Login / Sign up</button><a className="bg-green-600 px-5 py-3 rounded-xl font-bold text-lg" target="_blank" rel="noopener" href=${cta}>WhatsApp par 7 din free trial</a></div>
- <p className="mt-3 text-sm text-neutral-400">Sign up ke saath 7 din free trial apne aap shuru.</p></section>
+ <section className="py-10 sm:py-16"><h1 className="text-4xl sm:text-6xl font-extrabold leading-tight">Fee tracking on autopilot.<br/>A gym that stays full.</h1>
+ <p className="mt-4 text-lg text-neutral-300 max-w-xl">See which memberships are expiring, who owes fees, and who to message on WhatsApp. All in one app, right on your phone.</p>
+ <div className="flex gap-3 mt-6 flex-wrap"><button onClick=${onDemo} className="bg-orange-600 px-5 py-3 rounded-xl font-bold text-lg">Login / Sign up</button><a className="bg-green-600 px-5 py-3 rounded-xl font-bold text-lg" target="_blank" rel="noopener" href=${cta}>Start a 7-day free trial on WhatsApp</a></div>
+ <p className="mt-3 text-sm text-neutral-400">Your 7-day free trial starts automatically when you sign up.</p></section>
  <section className="grid sm:grid-cols-3 gap-3">${F.map(([i,t,d])=>h`<div key=${t} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4"><div className="text-3xl">${i}</div><div className="font-bold mt-1">${t}</div><p className="text-sm text-neutral-400 mt-1">${d}</p></div>`)}</section>
- <section className="mt-12"><h2 className="text-2xl font-extrabold mb-3">Seedha aur saaf price</h2><div className="grid sm:grid-cols-2 gap-3">${Pl.map(([n,p,fs,hi])=>h`<div key=${n} className=${'rounded-2xl p-5 border-2 '+(hi?'border-orange-500 bg-neutral-900':'border-neutral-800 bg-neutral-900')}><div className="font-bold">${n}</div><div className="text-4xl font-extrabold my-1">${p}<span className="text-base font-medium text-neutral-400"> / mahina</span></div><ul className="text-sm space-y-1 mt-2">${fs.map(x=>h`<li key=${x}>✓ ${x}</li>`)}</ul></div>`)}</div><p className="text-sm text-neutral-400 mt-2">UPI se payment. Pehle 7 din free.</p></section>
- <section className="mt-12 bg-neutral-900 border border-neutral-800 rounded-2xl p-5"><h2 className="text-2xl font-extrabold mb-2">Shuru karna aasaan hai</h2><p className="text-neutral-300">Hume WhatsApp par gym ka naam bhejein. Hum aapka account bana denge, aap members add karenge, aur usi din se reminder bhejna shuru.</p><a className="inline-block mt-4 bg-orange-600 px-5 py-3 rounded-xl font-bold" target="_blank" rel="noopener" href=${cta}>Abhi WhatsApp karein</a></section>
+ <section className="mt-12"><h2 className="text-2xl font-extrabold mb-3">Simple pricing</h2><div className="grid sm:grid-cols-2 gap-3">${Pl.map(([n,p,fs,hi])=>h`<div key=${n} className=${'rounded-2xl p-5 border-2 '+(hi?'border-orange-500 bg-neutral-900':'border-neutral-800 bg-neutral-900')}><div className="font-bold">${n}</div><div className="text-4xl font-extrabold my-1">${p}<span className="text-base font-medium text-neutral-400"> / month</span></div><ul className="text-sm space-y-1 mt-2">${fs.map(x=>h`<li key=${x}>✓ ${x}</li>`)}</ul></div>`)}</div><p className="text-sm text-neutral-400 mt-2">Pay by UPI. The first 7 days are free.</p></section>
+ <section className="mt-12 bg-neutral-900 border border-neutral-800 rounded-2xl p-5"><h2 className="text-2xl font-extrabold mb-2">Getting started is easy</h2><p className="text-neutral-300">Sign up with your gym name and phone number, add your members, and start sending reminders the same day.</p><a className="inline-block mt-4 bg-orange-600 px-5 py-3 rounded-xl font-bold" target="_blank" rel="noopener" href=${cta}>Message us on WhatsApp</a></section>
  </div>`};
 
 const end=m=>addM(m.start,m.plan),due=m=>m.total-m.paid;
 const st=m=>dl(end(m))<0?'expired':due(m)>0?'due':'ok';
-const remind=(m,g)=>`Namaste ${m.name} ji, ${g.name} se message. Aapki ${due(m)>0?'fees ₹'+due(m)+' baaki hai aur ':''}membership ${fd(end(m))} ko ${dl(end(m))<0?'expire ho chuki hai':'expire ho rahi hai'}. Kripya jaldi jama karein. Dhanyavaad!`;
+const remind=(m,g)=>`Hello ${m.name}, this is ${g.name}. ${due(m)>0?'Your pending fee is ₹'+due(m)+' and your ':'Your '}membership ${dl(end(m))<0?'expired':'expires'} on ${fd(end(m))}. Please renew at your earliest convenience. Thank you!`;
 
 function QR({v,s=120}){let x=0;for(const c of v)x=(x*31+c.charCodeAt(0))>>>0;const r=()=>(x=(x*1664525+1013904223)>>>0)/4294967296;const n=21,cells=[];
  for(let i=0;i<n;i++)for(let j=0;j<n;j++){const f=(a,b)=>(i<7&&j<7&&(a||b))||(i<7&&j>13&&(a||b))||(i>13&&j<7&&(a||b));const k=(i%14)<7&&(j%14)<7&&!(i>6&&j>6)?((i%14)==0||(i%14)==6||(j%14)==0||(j%14)==6||((i%14)>1&&(i%14)<5&&(j%14)>1&&(j%14)<5)):r()>.5;if(k)cells.push(h`<rect key=${i+'-'+j} x=${j} y=${i} width="1" height="1"/>`)}
@@ -65,14 +65,14 @@ function QR({v,s=120}){let x=0;for(const c of v)x=(x*31+c.charCodeAt(0))>>>0;con
 
 const Btn=({c='bg-neutral-800',...p})=>h`<button ...${p} className=${'px-3 py-2 rounded-lg font-semibold text-sm '+c+' '+(p.className||'')}/>`;
 const Modal=({title,onClose,children})=>h`<div className="fixed inset-0 bg-black/80 z-50 overflow-y-auto p-3" onClick=${onClose}><div className="max-w-lg mx-auto bg-neutral-900 border border-neutral-700 rounded-2xl p-4 my-4" onClick=${e=>e.stopPropagation()}><div className="flex justify-between items-center mb-3"><h3 className="text-xl font-bold">${title}</h3><button onClick=${onClose} className="text-2xl px-2" aria-label="Close">×</button></div>${children}</div></div>`;
-const Badge=({s})=>{const m={ok:['Active','bg-green-900 text-green-300'],due:['Fees baaki','bg-amber-900 text-amber-300'],expired:['Expired','bg-red-900 text-red-300']}[s];return h`<span className=${'px-2 py-0.5 rounded-full text-xs font-semibold '+m[1]}>${m[0]}</span>`};
+const Badge=({s})=>{const m={ok:['Active','bg-green-900 text-green-300'],due:['Fee due','bg-amber-900 text-amber-300'],expired:['Expired','bg-red-900 text-red-300']}[s];return h`<span className=${'px-2 py-0.5 rounded-full text-xs font-semibold '+m[1]}>${m[0]}</span>`};
 
 function UpiQR({uri}){const r=React.useRef();React.useEffect(()=>{r.current.innerHTML='';try{new QRCode(r.current,{text:uri,width:150,height:150})}catch(e){}},[uri]);return h`<div ref=${r} className="bg-white p-2 rounded inline-block"/>`}
 function Lock({g}){return h`<div className="min-h-[80vh] grid place-items-center p-4"><div className="max-w-sm text-center bg-neutral-900 border border-red-700 rounded-2xl p-6">
  <div className="text-5xl">🔒</div><h2 className="text-2xl font-bold mt-2">${g.name}</h2>
  <p className="mt-3">Your GymPro Software Subscription has expired. Pay <b>₹999/month</b> via UPI to unlock immediately.</p>
- <div className="flex justify-center my-4"><${UpiQR} uri=${upi}/></div><p className="text-sm mb-3">UPI ID: <b>${UPI_ID}</b><br/>Payment ke baad screenshot WhatsApp karein.</p>
- <a className="block bg-green-600 rounded-lg py-3 font-bold" target="_blank" rel="noopener" href=${wa(SUPPORT,'Namaste, '+g.name+' ka GymPro subscription renew karna hai.')}>Contact Support on WhatsApp</a></div></div>`}
+ <div className="flex justify-center my-4"><${UpiQR} uri=${upi}/></div><p className="text-sm mb-3">UPI ID: <b>${UPI_ID}</b><br/>After paying, send the screenshot on WhatsApp.</p>
+ <a className="block bg-green-600 rounded-lg py-3 font-bold" target="_blank" rel="noopener" href=${wa(SUPPORT,'Hello, I want to renew the GymPro subscription for '+g.name+'.')}>Contact Support on WhatsApp</a></div></div>`}
 
 function Admin({gyms,api}){
  const live=g=>!g.susp&&dl(g.exp)>=0,mrr=gyms.filter(live).reduce((a,g)=>a+g.plan,0);
@@ -93,44 +93,44 @@ function Owner({g,ms,ls,cs,pr,api,setTab,tab,modal,setModal}){
  const bars=[[38,22],[45,25],[41,30],[52,28],[48,31],[60,34]].map(([a,b])=>[a*Math.max(1,mine.length/4)*1000|0,b*Math.max(1,mine.length/4)*1000|0]),mx=Math.max(...bars.map(b=>b[0]));
  const mon=[5,4,3,2,1,0].map(i=>new Date(T().getFullYear(),T().getMonth()-i,1).toLocaleString('en',{month:'short'}));
  const newM=()=>setModal({k:'edit',m:{id:'',gid:g.id,name:'',phone:'',gender:'M',plan:1,start:td,total:'',paid:''}});
- const saveM=m=>{m={...m,total:+m.total||0,paid:+m.paid||0,plan:+m.plan};if(!m.name||String(m.phone).replace(/\D/g,'').length<10){alert('Naam aur 10 digit phone zaroori hai.');return}
+ const saveM=m=>{m={...m,total:+m.total||0,paid:+m.paid||0,plan:+m.plan};if(!m.name||String(m.phone).replace(/\D/g,'').length<10){alert('Name and a 10-digit phone number are required.');return}
   api.saveMember(m,mine.length).then(ok=>ok&&setModal(null))};
  const gate=()=>{const m=mine.find(x=>x.id.toLowerCase()===gid.trim().toLowerCase());
-  if(!m)return setRes({bad:1,t:'Member nahi mila',s:'ID dobara check karein'});
+  if(!m)return setRes({bad:1,t:'Member not found',s:'Please check the ID and try again'});
   const s=st(m);if(s==='ok'){api.addCheck(m);setRes({t:`Welcome ${m.name}! Access Granted.`,s:`Days Left: ${dl(end(m))}`})}
   else setRes({bad:1,t:'ACCESS DENIED!',s:(s==='expired'?'Membership Expired':'Fee Due: '+ru(due(m)))+(s==='expired'&&due(m)?' / Fee Due: '+ru(due(m)):'')})};
  const tabs=[['dash','🏠','Home'],['mem','👥','Members'],['gate','📷','Gate'],['lead','📝','Leads']];
  const sub=dl(g.exp);
  return h`<div className="max-w-3xl mx-auto p-3 pb-24">
- ${sub<=5&&h`<div className="bg-amber-500 text-black rounded-lg p-2 mb-3 text-sm font-semibold">GymPro subscription ${sub===0?'aaj':sub+' din mein'} expire hoga. Lock se bachne ke liye renew karein.</div>`}
+ ${sub<=5&&h`<div className="bg-amber-500 text-black rounded-lg p-2 mb-3 text-sm font-semibold">Your GymPro subscription expires ${sub===0?'today':'in '+sub+' day'+(sub>1?'s':'')}. Renew to avoid being locked out.</div>`}
  ${tab==='dash'&&h`<div>
   <div className="grid grid-cols-2 gap-2">${[['Active Members',act.length],['Today’s Check-ins',chk],['Pending Fees',ru(pend)],['Expiring in 7 Days',exp7.length]].map(([a,b])=>h`<div key=${a} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3"><div className="text-2xl font-extrabold text-orange-500">${b}</div><div className="text-xs text-neutral-400">${a}</div></div>`)}</div>
   <div className="flex gap-2 my-3 flex-wrap"><${Btn} c="bg-orange-600" onClick=${newM}>+ Add Member<//><${Btn} onClick=${()=>setTab('gate')}>Gate QR Scanner<//><${Btn} onClick=${()=>{setTab('lead');setLead(true)}}>Add Walk-in Inquiry<//></div>
-  <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3"><div className="font-bold mb-2">Revenue vs Expense (6 months)</div><div className="flex items-end gap-2 h-40">${bars.map((b,i)=>h`<div key=${i} className="flex-1 flex flex-col items-center justify-end h-full"><div className="flex items-end gap-1 w-full h-full"><div className="flex-1 bg-orange-500 rounded-t" style=${{height:b[0]/mx*100+'%'}} title=${ru(b[0])}/><div className="flex-1 bg-neutral-500 rounded-t" style=${{height:b[1]/mx*100+'%'}} title=${ru(b[1])}/></div><div className="text-xs text-neutral-400 mt-1">${mon[i]}</div></div>`)}</div><div className="text-xs mt-2 text-neutral-400"><span className="text-orange-500">■</span> Revenue ${ru(bars[5][0])} · ■ Expense ${ru(bars[5][1])} (is mahine, demo data)</div></div></div>`}
- ${tab==='mem'&&h`<div><div className="flex gap-2 mb-2"><input placeholder="Naam / ID / phone" value=${q} onChange=${e=>setQ(e.target.value)}/><${Btn} c="bg-orange-600 whitespace-nowrap" onClick=${newM}>+ Member<//></div>
-  <div className="flex gap-2 mb-3 overflow-x-auto">${[['all','Sab'],['due','Fees baaki'],['soon','7 din mein expire'],['expired','Expired']].map(([k,l])=>h`<button key=${k} onClick=${()=>setFlt(k)} className=${'px-3 py-1 rounded-full text-sm whitespace-nowrap '+(flt===k?'bg-orange-600':'bg-neutral-800')}>${l}</button>`)}</div>
+  <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3"><div className="font-bold mb-2">Revenue vs Expense (6 months)</div><div className="flex items-end gap-2 h-40">${bars.map((b,i)=>h`<div key=${i} className="flex-1 flex flex-col items-center justify-end h-full"><div className="flex items-end gap-1 w-full h-full"><div className="flex-1 bg-orange-500 rounded-t" style=${{height:b[0]/mx*100+'%'}} title=${ru(b[0])}/><div className="flex-1 bg-neutral-500 rounded-t" style=${{height:b[1]/mx*100+'%'}} title=${ru(b[1])}/></div><div className="text-xs text-neutral-400 mt-1">${mon[i]}</div></div>`)}</div><div className="text-xs mt-2 text-neutral-400"><span className="text-orange-500">■</span> Revenue ${ru(bars[5][0])} · ■ Expense ${ru(bars[5][1])} (this month, sample data)</div></div></div>`}
+ ${tab==='mem'&&h`<div><div className="flex gap-2 mb-2"><input placeholder="Name / ID / phone" value=${q} onChange=${e=>setQ(e.target.value)}/><${Btn} c="bg-orange-600 whitespace-nowrap" onClick=${newM}>+ Member<//></div>
+  <div className="flex gap-2 mb-3 overflow-x-auto">${[['all','All'],['due','Fees due'],['soon','Expiring in 7 days'],['expired','Expired']].map(([k,l])=>h`<button key=${k} onClick=${()=>setFlt(k)} className=${'px-3 py-1 rounded-full text-sm whitespace-nowrap '+(flt===k?'bg-orange-600':'bg-neutral-800')}>${l}</button>`)}</div>
   ${list.length?list.map(m=>h`<div key=${m.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 mb-2"><div className="flex justify-between"><div><b>${m.name}</b> <span className="text-xs text-neutral-400">${m.id}</span></div><${Badge} s=${st(m)}/></div>
    <div className="text-sm text-neutral-400">${m.phone} · Expiry ${fd(end(m))}${due(m)>0?' · Due '+ru(due(m)):''}</div>
-   <div className="flex gap-2 mt-2 flex-wrap"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(m.phone,remind(m,g))}>WhatsApp</a><${Btn} onClick=${()=>setModal({k:'rc',m})}>Receipt<//><${Btn} onClick=${()=>setModal({k:'edit',m})}>Edit / Profile<//></div></div>`):h`<p className="text-center text-neutral-400 p-8">Koi member nahi mila.</p>`}</div>`}
- ${tab==='gate'&&h`<div><div className="flex gap-2"><input placeholder="Member ID (jaise PF001)" value=${gid} onChange=${e=>setGid(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&gate()}/><${Btn} c="bg-orange-600" onClick=${gate}>Check<//></div>
-  <div className="text-xs text-neutral-400 my-2">Test karein: ${mine.slice(0,6).map(m=>h`<button key=${m.id} className="underline mr-2" onClick=${()=>setGid(m.id)}>${m.id}</button>`)}</div>
+   <div className="flex gap-2 mt-2 flex-wrap"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(m.phone,remind(m,g))}>WhatsApp</a><${Btn} onClick=${()=>setModal({k:'rc',m})}>Receipt<//><${Btn} onClick=${()=>setModal({k:'edit',m})}>Edit / Profile<//></div></div>`):h`<p className="text-center text-neutral-400 p-8">No members found.</p>`}</div>`}
+ ${tab==='gate'&&h`<div><div className="flex gap-2"><input placeholder="Member ID (e.g. PF001)" value=${gid} onChange=${e=>setGid(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&gate()}/><${Btn} c="bg-orange-600" onClick=${gate}>Check<//></div>
+  <div className="text-xs text-neutral-400 my-2">Try: ${mine.slice(0,6).map(m=>h`<button key=${m.id} className="underline mr-2" onClick=${()=>setGid(m.id)}>${m.id}</button>`)}</div>
   ${res&&h`<div className=${'rounded-2xl p-8 text-center mt-3 '+(res.bad?'flash':'bg-green-700')}><div className="text-5xl">${res.bad?'⛔':'✅'}</div><div className="text-2xl font-extrabold mt-2">${res.t}</div><div className="text-lg mt-1">${res.s}</div></div>`}</div>`}
  ${tab==='lead'&&h`<div><${Btn} c="bg-orange-600 mb-3" onClick=${()=>setLead(!lead)}>+ Walk-in Inquiry<//>
-  ${lead&&h`<form className="bg-neutral-900 border border-orange-600 rounded-xl p-3 mb-3 grid gap-2" onSubmit=${e=>{e.preventDefault();const f=new FormData(e.target);api.addLead({name:f.get('n'),phone:f.get('p'),note:f.get('o'),fu:f.get('d')});setLead(false)}}><input name="n" placeholder="Naam" required/><input name="p" placeholder="Phone" required/><input name="o" placeholder="Kya puchha (plan/timing)"/><input name="d" type="date" defaultValue=${addD(td,2)} required/><${Btn} c="bg-orange-600" type="submit">Save<//></form>`}
-  ${ls.filter(l=>l.gid===g.id).sort((a,b)=>a.fu>b.fu?1:-1).map(l=>h`<div key=${l.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 mb-2"><b>${l.name}</b> <span className="text-sm text-neutral-400">${l.phone}</span><div className="text-sm">${l.note}</div><div className=${'text-sm '+(dl(l.fu)<0?'text-red-400':'text-amber-400')}>Follow-up: ${fd(l.fu)}${dl(l.fu)<0?' (late)':''}</div>
-   <div className="flex gap-2 mt-2"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(l.phone,`Namaste ${l.name} ji, ${g.name} mein aapka swagat hai! Is mahine special offer: 3 mahine ke plan par 10% chhoot. Aaj hi aayein.`)}>WhatsApp Offer</a><${Btn} onClick=${()=>api.delLead(l.id)}>Hatayein<//></div></div>`)}</div>`}
+  ${lead&&h`<form className="bg-neutral-900 border border-orange-600 rounded-xl p-3 mb-3 grid gap-2" onSubmit=${e=>{e.preventDefault();const f=new FormData(e.target);api.addLead({name:f.get('n'),phone:f.get('p'),note:f.get('o'),fu:f.get('d')});setLead(false)}}><input name="n" placeholder="Name" required/><input name="p" placeholder="Phone" required/><input name="o" placeholder="What did they ask about? (plan, timing)"/><input name="d" type="date" defaultValue=${addD(td,2)} required/><${Btn} c="bg-orange-600" type="submit">Save<//></form>`}
+  ${ls.filter(l=>l.gid===g.id).sort((a,b)=>a.fu>b.fu?1:-1).map(l=>h`<div key=${l.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 mb-2"><b>${l.name}</b> <span className="text-sm text-neutral-400">${l.phone}</span><div className="text-sm">${l.note}</div><div className=${'text-sm '+(dl(l.fu)<0?'text-red-400':'text-amber-400')}>Follow-up: ${fd(l.fu)}${dl(l.fu)<0?' (overdue)':''}</div>
+   <div className="flex gap-2 mt-2"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(l.phone,`Hello ${l.name}, thank you for visiting ${g.name}! This month only: 10% off our 3-month plan. Visit us today to join.`)}>WhatsApp Offer</a><${Btn} onClick=${()=>api.delLead(l.id)}>Delete<//></div></div>`)}</div>`}
  <nav className="fixed bottom-0 inset-x-0 bg-neutral-950 border-t border-neutral-800 grid grid-cols-4" style=${{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>${tabs.map(([k,i,l])=>h`<button key=${k} onClick=${()=>setTab(k)} className=${'py-2 text-xs '+(tab===k?'text-orange-500 font-bold':'text-neutral-400')}><div className="text-xl">${i}</div>${l}</button>`)}</nav>
  ${modal&&modal.k==='edit'&&h`<${MemberForm} m=${modal.m} onSave=${saveM} onClose=${()=>setModal(null)} pr=${pr} setPr=${api.addProg} pf=${pf} setPf=${setPf}/>`}
  ${modal&&modal.k==='rc'&&h`<${Modal} title="Fee Receipt" onClose=${()=>setModal(null)}><div id="rc" className="bg-white text-black rounded-lg p-4"><div className="text-center font-extrabold text-xl">${g.name}</div><div className="text-center text-sm mb-3">Fee Receipt · ${fd(td)}</div>
-  ${[['Member',modal.m.name+' ('+modal.m.id+')'],['Plan',modal.m.plan+' mahina'],['Valid till',fd(end(modal.m))],['Total fee',ru(modal.m.total)],['Amount paid',ru(modal.m.paid)],['Balance due',ru(due(modal.m))]].map(([a,b])=>h`<div key=${a} className="flex justify-between border-b py-1"><span>${a}</span><b>${b}</b></div>`)}<div className="text-center text-xs mt-3">Dhanyavaad!</div></div>
-  <div className="flex gap-2 mt-3"><${Btn} c="bg-orange-600" onClick=${()=>{try{window.print()}catch(e){}}}>Print<//><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(modal.m.phone,`${g.name} – Fee Receipt\n${modal.m.name}\nPaid: ${ru(modal.m.paid)}\nBalance: ${ru(due(modal.m))}\nDate: ${fd(td)}`)}>WhatsApp pe bhejein</a></div><//>`}
+  ${[['Member',modal.m.name+' ('+modal.m.id+')'],['Plan',modal.m.plan+(modal.m.plan>1?' months':' month')],['Valid till',fd(end(modal.m))],['Total fee',ru(modal.m.total)],['Amount paid',ru(modal.m.paid)],['Balance due',ru(due(modal.m))]].map(([a,b])=>h`<div key=${a} className="flex justify-between border-b py-1"><span>${a}</span><b>${b}</b></div>`)}<div className="text-center text-xs mt-3">Thank you!</div></div>
+  <div className="flex gap-2 mt-3"><${Btn} c="bg-orange-600" onClick=${()=>{try{window.print()}catch(e){}}}>Print<//><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(modal.m.phone,`${g.name} – Fee Receipt\n${modal.m.name}\nPaid: ${ru(modal.m.paid)}\nBalance: ${ru(due(modal.m))}\nDate: ${fd(td)}`)}>Share on WhatsApp</a></div><//>`}
  </div>`}
 
 function MemberForm({m,onSave,onClose,pr,setPr,pf,setPf}){
  const [f,setF]=useState(m),s=k=>e=>setF({...f,[k]:e.target.value}),mine=pr.filter(p=>p.mid===f.id).sort((a,b)=>a.date>b.date?1:-1);
  const L=(t,c)=>h`<label className="block text-xs text-neutral-400">${t}${c}</label>`;
- return h`<${Modal} title=${f.id?'Edit / Profile':'Naya Member'} onClose=${onClose}><div className="grid grid-cols-2 gap-2">
-  <div className="col-span-2">${L('Naam',h`<input value=${f.name} onChange=${s('name')}/>`)}</div>
+ return h`<${Modal} title=${f.id?'Edit / Profile':'New Member'} onClose=${onClose}><div className="grid grid-cols-2 gap-2">
+  <div className="col-span-2">${L('Name',h`<input value=${f.name} onChange=${s('name')}/>`)}</div>
   ${L('Phone',h`<input inputMode="numeric" maxLength="10" value=${f.phone} onChange=${s('phone')}/>`)}
   ${L('Gender',h`<select value=${f.gender} onChange=${s('gender')}><option value="M">Male</option><option value="F">Female</option></select>`)}
   ${L('Plan',h`<select value=${f.plan} onChange=${s('plan')}><option value="1">1 Month</option><option value="3">3 Months</option><option value="6">6 Months</option><option value="12">12 Months</option></select>`)}
@@ -138,7 +138,7 @@ function MemberForm({m,onSave,onClose,pr,setPr,pf,setPf}){
   ${L('Total fee (₹)',h`<input type="number" value=${f.total} onChange=${s('total')}/>`)}
   ${L('Paid (₹)',h`<input type="number" value=${f.paid} onChange=${s('paid')}/>`)}
   <div className="col-span-2 text-sm bg-neutral-800 rounded-lg p-2">End date: <b>${fd(addM(f.start,f.plan))}</b> · Pending due: <b className="text-amber-400">${ru((+f.total||0)-(+f.paid||0))}</b></div>
-  <${Btn} c="bg-orange-600 col-span-2" onClick=${()=>onSave(f)}>Save karein<//></div>
+  <${Btn} c="bg-orange-600 col-span-2" onClick=${()=>onSave(f)}>Save<//></div>
   ${f.id&&h`<div className="mt-4 border-t border-neutral-700 pt-3"><div className="flex gap-3 items-center"><${QR} v=${f.id} s=${96}/><div><div className="text-2xl font-extrabold">${f.id}</div><div className="text-xs text-neutral-400">Member QR badge (placeholder)</div></div></div>
    <div className="font-bold mt-3 mb-1">Body progress</div>${mine.map((p,i)=>h`<div key=${i} className="text-sm flex justify-between"><span>${fd(p.date)}</span><span>${p.wt} kg · BMI ${(p.wt/Math.pow(p.ht/100,2)).toFixed(1)}</span></div>`)}
    <div className="flex gap-2 mt-2"><input placeholder="Weight kg" type="number" value=${pf.wt} onChange=${e=>setPf({...pf,wt:e.target.value})}/><input placeholder="Height cm" type="number" value=${pf.ht} onChange=${e=>setPf({...pf,ht:e.target.value})}/><${Btn} c="bg-orange-600" onClick=${()=>{if(pf.wt&&pf.ht){setPr({uid:f.uid,wt:+pf.wt,ht:+pf.ht});setPf({wt:'',ht:pf.ht})}}}>Log<//></div></div>`}<//>`}
@@ -151,17 +151,17 @@ function Auth({onBack}){
  const go=async e=>{e.preventDefault();setMsg('');setBusy(true);
   const r=mode==='in'?await sb.auth.signInWithPassword({email:f.email,password:f.pw}):await sb.auth.signUp({email:f.email,password:f.pw,options:{data:{gym_name:f.gym,phone:f.phone}}});
   setBusy(false);if(r.error)return setMsg(r.error.message);
-  if(mode==='up'&&!r.data.session)setMsg('Account ban gaya. Email mein confirm link kholein, phir Login karein.')};
+  if(mode==='up'&&!r.data.session)setMsg('Account created. Open the confirmation link in your email, then log in.')};
  return h`<div className="min-h-screen grid place-items-center p-4"><form onSubmit=${go} className="w-full max-w-sm bg-neutral-900 border border-neutral-700 rounded-2xl p-5 grid gap-3">
-  <div className="text-2xl font-extrabold text-orange-500">GymPro</div><div className="font-bold">${mode==='in'?'Login':'Naya account (7 din free)'}</div>
-  ${cfgBad&&h`<div className="bg-red-900 text-sm p-2 rounded">Setup baaki hai: file mein SUPA_URL ko apne project URL (https://xxxx.supabase.co) se badlein.</div>`}
-  ${mode==='up'&&h`<input placeholder="Gym ka naam" required value=${f.gym} onChange=${s('gym')}/><input placeholder="WhatsApp number" inputMode="numeric" required value=${f.phone} onChange=${s('phone')}/>`}
+  <div className="text-2xl font-extrabold text-orange-500">GymPro</div><div className="font-bold">${mode==='in'?'Login':'Create account (7-day free trial)'}</div>
+  ${cfgBad&&h`<div className="bg-red-900 text-sm p-2 rounded">Setup incomplete: set SUPA_URL in the file to your Supabase project URL.</div>`}
+  ${mode==='up'&&h`<input placeholder="Gym name" required value=${f.gym} onChange=${s('gym')}/><input placeholder="WhatsApp number" inputMode="numeric" required value=${f.phone} onChange=${s('phone')}/>`}
   <input type="email" placeholder="Email" required value=${f.email} onChange=${s('email')} autoComplete="email"/>
-  <input type="password" placeholder="Password (kam se kam 6 akshar)" minLength="6" required value=${f.pw} onChange=${s('pw')} autoComplete=${mode==='in'?'current-password':'new-password'}/>
+  <input type="password" placeholder="Password (at least 6 characters)" minLength="6" required value=${f.pw} onChange=${s('pw')} autoComplete=${mode==='in'?'current-password':'new-password'}/>
   ${msg&&h`<div className="text-sm text-amber-300">${msg}</div>`}
-  <${Btn} c="bg-orange-600 py-3" type="submit" disabled=${busy||cfgBad}>${busy?'Ruko...':mode==='in'?'Login':'Sign up'}<//>
-  <button type="button" className="text-sm underline" onClick=${()=>{setMode(mode==='in'?'up':'in');setMsg('')}}>${mode==='in'?'Naya gym? Sign up karein':'Pehle se account hai? Login'}</button>
-  <button type="button" className="text-xs text-neutral-400" onClick=${onBack}>Wapas</button></form></div>`}
+  <${Btn} c="bg-orange-600 py-3" type="submit" disabled=${busy||cfgBad}>${busy?'Please wait...':mode==='in'?'Login':'Sign up'}<//>
+  <button type="button" className="text-sm underline" onClick=${()=>{setMode(mode==='in'?'up':'in');setMsg('')}}>${mode==='in'?'New gym? Sign up':'Already have an account? Log in'}</button>
+  <button type="button" className="text-xs text-neutral-400" onClick=${onBack}>Back</button></form></div>`}
 
 function App(){
  const [view,setView]=useState('landing'),[sess,setSess]=useState(undefined),[admin,setAdmin]=useState(false),[gyms,setGyms]=useState([]),[g,setG]=useState(null),[ms,setMs]=useState([]),[ls,setLs]=useState([]),[cs,setCs]=useState([]),[pr,setPr]=useState([]),[tab,setTab]=useState('dash'),[modal,setModal]=useState(null),[err,setErr]=useState(''),[ld,setLd]=useState(false);
