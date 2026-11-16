@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -67,7 +68,24 @@ const Btn=({c='bg-neutral-800',...p})=>h`<button ...${p} className=${'px-3 py-2 
 const Modal=({title,onClose,children})=>h`<div className="fixed inset-0 bg-black/80 z-50 overflow-y-auto p-3" onClick=${onClose}><div className="max-w-lg mx-auto bg-neutral-900 border border-neutral-700 rounded-2xl p-4 my-4" onClick=${e=>e.stopPropagation()}><div className="flex justify-between items-center mb-3"><h3 className="text-xl font-bold">${title}</h3><button onClick=${onClose} className="text-2xl px-2" aria-label="Close">×</button></div>${children}</div></div>`;
 const Badge=({s})=>{const m={ok:['Active','bg-green-900 text-green-300'],due:['Fee due','bg-amber-900 text-amber-300'],expired:['Expired','bg-red-900 text-red-300']}[s];return h`<span className=${'px-2 py-0.5 rounded-full text-xs font-semibold '+m[1]}>${m[0]}</span>`};
 
-function UpiQR({uri}){const r=React.useRef();React.useEffect(()=>{r.current.innerHTML='';try{new QRCode(r.current,{text:uri,width:150,height:150})}catch(e){}},[uri]);return h`<div ref=${r} className="bg-white p-2 rounded inline-block"/>`}
+const parseCsv=t=>{const rows=[];let r=[],c='',q=false;t=t.replace(/^\uFEFF/,'');for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}else if(ch==='"')q=true;else if(ch===','){r.push(c);c=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;r.push(c);c='';rows.push(r);r=[]}else c+=ch}if(c!==''||r.length){r.push(c);rows.push(r)}return rows.filter(x=>x.some(y=>y.trim()))};
+const normDate=s=>{s=String(s||'').trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/),y,mo,d;if(m){y=m[1];mo=m[2];d=m[3]}else if(m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/)){d=m[1];mo=m[2];y=m[3]}else return null;const dt=new Date(+y,+mo-1,+d);return dt.getMonth()===+mo-1?ymd(dt):null};
+let AC;const unlock=()=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}};
+const tone=(f,t0,d,type,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime+t0);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t0+d);o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+t0);o.stop(AC.currentTime+t0+d)};
+const snd=ok=>{try{unlock();if(ok){tone(880,0,.15,'sine',.4);tone(1320,.15,.25,'sine',.4)}else{[0,.35,.7].forEach(t=>tone(180,t,.3,'sawtooth',.9));if(navigator.vibrate)navigator.vibrate([300,100,300])}}catch(e){}};
+function cardPng(gname,m){return new Promise(res=>{const d=document.createElement('div');new QRCode(d,{text:m.id,width:240,height:240});setTimeout(()=>{const src=d.querySelector('canvas'),c=document.createElement('canvas');c.width=900;c.height=520;const x=c.getContext('2d');
+ x.fillStyle='#111827';x.fillRect(0,0,900,520);x.fillStyle='#f97316';x.fillRect(0,0,900,14);
+ x.fillStyle='#fff';x.font='bold 44px sans-serif';x.fillText(gname,40,90);x.font='22px sans-serif';x.fillStyle='#9ca3af';x.fillText('MEMBERSHIP CARD',40,125);
+ x.fillStyle='#fff';x.font='bold 40px sans-serif';x.fillText(m.name,40,250);x.font='28px sans-serif';x.fillStyle='#f97316';x.fillText('ID: '+m.id,40,300);
+ x.fillStyle='#d1d5db';x.fillText('Valid till: '+fd(end(m)),40,350);x.fillText('Plan: '+m.plan+(Number(m.plan)>1?' months':' month'),40,395);
+ x.fillStyle='#fff';x.fillRect(600,150,260,260);x.drawImage(src,610,160,240,240);x.fillStyle='#9ca3af';x.font='20px sans-serif';x.fillText('Show this QR at the gate',590,455);
+ c.toBlob(res,'image/png')},60)})}
+function BulkQ({bq,setBq,mine,g}){const ms=bq.ids.map(id=>mine.find(m=>m.id===id)).filter(Boolean),m=ms[bq.i];
+ return h`<${Modal} title="Bulk Reminders" onClose=${()=>setBq(null)}>${m?h`<div><div className="text-sm text-neutral-400 mb-2">${bq.i+1} of ${ms.length}</div><div className="h-2 bg-neutral-800 rounded mb-3"><div className="h-2 bg-green-500 rounded" style=${{width:(bq.i/ms.length*100)+'%'}}/></div>
+  <div className="text-2xl font-extrabold">${m.name}</div><div className="text-neutral-400">${m.phone} · Expiry ${fd(end(m))}${due(m)>0?' · Due '+ru(due(m)):''}</div><div className="text-sm bg-neutral-800 rounded-lg p-3 my-3">${remind(m,g)}</div>
+  <a className="block text-center bg-green-600 rounded-xl py-5 text-xl font-extrabold" target="_blank" rel="noopener" href=${wa(m.phone,remind(m,g))} onClick=${()=>setBq({...bq,i:bq.i+1})}>Send & Next →</a>
+  <button className="w-full mt-3 text-sm underline" onClick=${()=>setBq({...bq,i:bq.i+1})}>Skip</button></div>`:h`<div className="text-center py-6"><div className="text-5xl">✅</div><div className="text-xl font-bold mt-2">All reminders sent</div><${Btn} c="bg-orange-600 mt-4" onClick=${()=>setBq(null)}>Close<//></div>`}<//>`}
+function UpiQR({uri,size=150}){const r=React.useRef();React.useEffect(()=>{r.current.innerHTML='';try{new QRCode(r.current,{text:uri,width:size,height:size})}catch(e){}},[uri]);return h`<div ref=${r} className="bg-white p-2 rounded inline-block"/>`}
 function Lock({g}){const [cp,setCp]=useState(false);const copy=async()=>{try{await navigator.clipboard.writeText(UPI_ID)}catch(e){const t=document.createElement('textarea');t.value=UPI_ID;document.body.appendChild(t);t.select();try{document.execCommand('copy')}catch(x){}t.remove()}setCp(true);setTimeout(()=>setCp(false),2000)};return h`<div className="min-h-[80vh] grid place-items-center p-4"><div className="max-w-sm text-center bg-neutral-900 border border-red-700 rounded-2xl p-6">
  <div className="text-5xl">🔒</div><h2 className="text-2xl font-bold mt-2">${g.name}</h2>
  <p className="mt-3">Your GymPro Software Subscription has expired. Pay <b>₹999/month</b> via UPI to unlock immediately.</p>
@@ -85,9 +103,15 @@ function Admin({gyms,api}){
    <td className="p-2 flex gap-2"><${Btn} c="bg-orange-600" onClick=${()=>api.extend(g.id)}>Extend +30 Days<//><${Btn} onClick=${()=>api.lock(g.id,!g.susp)}>${g.susp?'Unlock':'Suspend'}<//></td></tr>`)}</tbody></table></div></div>`}
 
 function Owner({g,ms,ls,cs,pr,api,setTab,tab,modal,setModal}){
- const [flt,setFlt]=useState('all'),[q,setQ]=useState(''),[gid,setGid]=useState(''),[res,setRes]=useState(null),[lead,setLead]=useState(false),[pf,setPf]=useState({wt:'',ht:''});
+ const [flt,setFlt]=useState('all'),[q,setQ]=useState(''),[gid,setGid]=useState(''),[res,setRes]=useState(null),[lead,setLead]=useState(false),[pf,setPf]=useState({wt:'',ht:''}),[cam,setCam]=useState(false),[camErr,setCamErr]=useState(''),[bq,setBq]=useState(null),[imp,setImp]=useState(''),gref=React.useRef(),lastRef=React.useRef({c:'',t:0}),tm=React.useRef(),fileRef=React.useRef();
+ React.useEffect(()=>{if(tab!=='gate')setCam(false)},[tab]);
+ React.useEffect(()=>{if(!cam)return;if(typeof Html5Qrcode==='undefined'){setCamErr('Scanner library failed to load.');setCam(false);return}
+  const s=new Html5Qrcode('reader');
+  s.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},txt=>{const n=Date.now(),l=lastRef.current;if(txt===l.c&&n-l.t<4000)return;lastRef.current={c:txt,t:n};gref.current(txt)},()=>{}).catch(()=>{setCamErr('Camera could not start. Allow camera access (HTTPS is required).');setCam(false)});
+  return()=>{s.stop().then(()=>s.clear()).catch(()=>{})}},[cam]);
  const mine=ms.filter(m=>m.gid===g.id);
  const act=mine.filter(m=>dl(end(m))>=0),exp7=mine.filter(m=>dl(end(m))>=0&&dl(end(m))<=7),pend=mine.reduce((a,m)=>a+due(m),0);
+ const absent=act.map(m=>{const ds=cs.filter(c=>c.mid===m.id).map(c=>c.date).sort(),ld=ds.length?ds[ds.length-1]:m.start;return{m,d:-dl(ld),never:!ds.length}}).filter(x=>x.d>=5).sort((a,b)=>b.d-a.d);
  const chk=cs.filter(c=>c.date===td&&mine.some(m=>m.id===c.mid)).length;
  const list=mine.filter(m=>(flt==='all'||(flt==='due'&&due(m)>0)||(flt==='soon'&&dl(end(m))>=0&&dl(end(m))<=7)||(flt==='expired'&&dl(end(m))<0))&&(!q||(m.name+m.id+m.phone).toLowerCase().includes(q.toLowerCase())));
  const bars=[[38,22],[45,25],[41,30],[52,28],[48,31],[60,34]].map(([a,b])=>[a*Math.max(1,mine.length/4)*1000|0,b*Math.max(1,mine.length/4)*1000|0]),mx=Math.max(...bars.map(b=>b[0]));
@@ -95,39 +119,58 @@ function Owner({g,ms,ls,cs,pr,api,setTab,tab,modal,setModal}){
  const newM=()=>setModal({k:'edit',m:{id:'',gid:g.id,name:'',phone:'',gender:'M',plan:1,start:td,total:'',paid:''}});
  const saveM=m=>{m={...m,total:+m.total||0,paid:+m.paid||0,plan:+m.plan};if(!m.name||String(m.phone).replace(/\D/g,'').length<10){alert('Name and a 10-digit phone number are required.');return}
   api.saveMember(m,mine.length).then(ok=>ok&&setModal(null))};
- const gate=()=>{const m=mine.find(x=>x.id.toLowerCase()===gid.trim().toLowerCase());
-  if(!m)return setRes({bad:1,t:'Member not found',s:'Please check the ID and try again'});
-  const s=st(m);if(s==='ok'){api.addCheck(m);setRes({t:`Welcome ${m.name}! Access Granted.`,s:`Days Left: ${dl(end(m))}`})}
-  else setRes({bad:1,t:'ACCESS DENIED!',s:(s==='expired'?'Membership Expired':'Fee Due: '+ru(due(m)))+(s==='expired'&&due(m)?' / Fee Due: '+ru(due(m)):'')})};
+ const check=code=>{const c=String(code).trim().toLowerCase(),m=mine.find(x=>x.id.toLowerCase()===c);let r;
+  if(!m)r={bad:1,t:'Member not found',s:'Please check the ID and try again'};
+  else{const s=st(m);if(s==='ok'){api.addCheck(m);r={t:`Welcome ${m.name}! Access Granted.`,s:`Days Left: ${dl(end(m))}`}}
+  else r={bad:1,t:'ACCESS DENIED',s:(s==='expired'?'Membership Expired':'Fee Due '+ru(due(m)))+(s==='expired'&&due(m)>0?' · Fee Due '+ru(due(m)):'')}}
+  snd(!r.bad);setRes(r);clearTimeout(tm.current);tm.current=setTimeout(()=>setRes(null),4000)};
+ gref.current=check;const gate=()=>check(gid);
+ const dueList=()=>mine.filter(m=>due(m)>0||dl(end(m))<=7).sort((a,b)=>end(a)>end(b)?1:-1);
+ const startBulk=()=>{const l=dueList();if(!l.length){setImp('No members need a reminder right now.');return}setBq({ids:l.map(m=>m.id),i:0})};
+ const sampleCsv=()=>{const t='Name,Phone,Plan Months,Start Date,Total Fee,Paid\nRahul Verma,9876543210,3,'+td+',6000,6000\nPriya Singh,9876543211,1,'+td+',1500,1000\n';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='gympro-sample-members.csv';a.click()};
+ const onFile=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const rd=new FileReader();rd.onload=async()=>{
+  const rows=parseCsv(String(rd.result));if(rows.length<2){setImp('The file is empty or has no data rows.');return}
+  const hd=rows[0].map(x=>x.trim().toLowerCase().replace(/[^a-z]/g,'')),ix=k=>hd.indexOf(k),ci={n:ix('name'),p:ix('phone'),m:ix('planmonths'),s:ix('startdate'),t:ix('totalfee'),d:ix('paid')};
+  if(Object.values(ci).some(v=>v<0)){setImp('Columns must be: Name, Phone, Plan Months, Start Date, Total Fee, Paid. Use Download Sample CSV.');return}
+  const have=new Set(mine.map(m=>m.phone)),good=[],bad=[];
+  rows.slice(1).forEach((r,k)=>{const ph=String(r[ci.p]||'').replace(/\D/g,'').slice(-10),pm=+r[ci.m],sd=normDate(r[ci.s]),nm=(r[ci.n]||'').trim();
+   if(!nm||ph.length<10||![1,3,6,12].includes(pm)||!sd||have.has(ph)){bad.push(k+2);return}
+   have.add(ph);good.push({name:nm,phone:ph,plan:pm,start:sd,total:+r[ci.t]||0,paid:+r[ci.d]||0})});
+  if(!good.length){setImp('No valid rows found. Skipped rows: '+bad.slice(0,15).join(', '));return}
+  setImp('Importing '+good.length+' members...');
+  const ok=await api.importRows(good,mine);
+  setImp(ok?`Imported ${good.length} members.`+(bad.length?` Skipped ${bad.length} invalid or duplicate row(s): ${bad.slice(0,15).join(', ')}${bad.length>15?'...':''}`:''):'Import failed. See the error at the top of the page.')};
+  rd.readAsText(f)};
  const tabs=[['dash','🏠','Home'],['mem','👥','Members'],['gate','📷','Gate'],['lead','📝','Leads']];
  const sub=dl(g.exp);
  return h`<div className="max-w-3xl mx-auto p-3 pb-24">
  ${sub<=5&&h`<div className="bg-amber-500 text-black rounded-lg p-2 mb-3 text-sm font-semibold">Your GymPro subscription expires ${sub===0?'today':'in '+sub+' day'+(sub>1?'s':'')}. Renew to avoid being locked out.</div>`}
  ${tab==='dash'&&h`<div>
   <div className="grid grid-cols-2 gap-2">${[['Active Members',act.length],['Today’s Check-ins',chk],['Pending Fees',ru(pend)],['Expiring in 7 Days',exp7.length]].map(([a,b])=>h`<div key=${a} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3"><div className="text-2xl font-extrabold text-orange-500">${b}</div><div className="text-xs text-neutral-400">${a}</div></div>`)}</div>
-  <div className="flex gap-2 my-3 flex-wrap"><${Btn} c="bg-orange-600" onClick=${newM}>+ Add Member<//><${Btn} onClick=${()=>setTab('gate')}>Gate QR Scanner<//><${Btn} onClick=${()=>{setTab('lead');setLead(true)}}>Add Walk-in Inquiry<//></div>
+  <div className="flex gap-2 my-3 flex-wrap"><${Btn} c="bg-orange-600" onClick=${newM}>+ Add Member<//><${Btn} onClick=${()=>setTab('gate')}>Gate QR Scanner<//><${Btn} onClick=${()=>{setTab('lead');setLead(true)}}>Add Walk-in Inquiry<//></div>${absent.length>0&&h`<div className="bg-neutral-900 border border-amber-700 rounded-xl p-3 mb-3"><div className="font-bold mb-2">Absent 5+ days (${absent.length})</div>${absent.slice(0,8).map(({m,d,never})=>h`<div key=${m.id} className="flex items-center justify-between gap-2 py-1 border-t border-neutral-800"><div className="text-sm"><b>${m.name}</b> <span className="text-neutral-400">${never?'no check-ins yet':d+' days ago'}</span></div><a className="bg-green-600 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap" target="_blank" rel="noopener" href=${wa(m.phone,`Hi ${m.name}, we miss you at ${g.name}! It has been ${d} days since your last visit. Come back today and get back on track. We are here to help!`)}>Motivate on WhatsApp</a></div>`)}${absent.length>8&&h`<div className="text-xs text-neutral-400 mt-1">+ ${absent.length-8} more</div>`}</div>`}
   <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3"><div className="font-bold mb-2">Revenue vs Expense (6 months)</div><div className="flex items-end gap-2 h-40">${bars.map((b,i)=>h`<div key=${i} className="flex-1 flex flex-col items-center justify-end h-full"><div className="flex items-end gap-1 w-full h-full"><div className="flex-1 bg-orange-500 rounded-t" style=${{height:b[0]/mx*100+'%'}} title=${ru(b[0])}/><div className="flex-1 bg-neutral-500 rounded-t" style=${{height:b[1]/mx*100+'%'}} title=${ru(b[1])}/></div><div className="text-xs text-neutral-400 mt-1">${mon[i]}</div></div>`)}</div><div className="text-xs mt-2 text-neutral-400"><span className="text-orange-500">■</span> Revenue ${ru(bars[5][0])} · ■ Expense ${ru(bars[5][1])} (this month, sample data)</div></div></div>`}
- ${tab==='mem'&&h`<div><div className="flex gap-2 mb-2"><input placeholder="Name / ID / phone" value=${q} onChange=${e=>setQ(e.target.value)}/><${Btn} c="bg-orange-600 whitespace-nowrap" onClick=${newM}>+ Member<//></div>
+ ${tab==='mem'&&h`<div><div className="flex gap-2 mb-2"><input placeholder="Name / ID / phone" value=${q} onChange=${e=>setQ(e.target.value)}/><${Btn} c="bg-orange-600 whitespace-nowrap" onClick=${newM}>+ Member<//></div><div className="flex gap-2 mb-2 flex-wrap"><${Btn} c="bg-green-700" onClick=${startBulk}>Start Bulk Reminder Mode (${dueList().length})<//><${Btn} onClick=${()=>fileRef.current.click()}>Import CSV<//><${Btn} onClick=${sampleCsv}>Download Sample CSV<//><input ref=${fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange=${onFile}/></div>${imp&&h`<div className="text-sm bg-neutral-800 rounded-lg p-2 mb-2 flex justify-between gap-2"><span>${imp}</span><button onClick=${()=>setImp('')}>×</button></div>`}
   <div className="flex gap-2 mb-3 overflow-x-auto">${[['all','All'],['due','Fees due'],['soon','Expiring in 7 days'],['expired','Expired']].map(([k,l])=>h`<button key=${k} onClick=${()=>setFlt(k)} className=${'px-3 py-1 rounded-full text-sm whitespace-nowrap '+(flt===k?'bg-orange-600':'bg-neutral-800')}>${l}</button>`)}</div>
   ${list.length?list.map(m=>h`<div key=${m.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 mb-2"><div className="flex justify-between"><div><b>${m.name}</b> <span className="text-xs text-neutral-400">${m.id}</span></div><${Badge} s=${st(m)}/></div>
    <div className="text-sm text-neutral-400">${m.phone} · Expiry ${fd(end(m))}${due(m)>0?' · Due '+ru(due(m)):''}</div>
    <div className="flex gap-2 mt-2 flex-wrap"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(m.phone,remind(m,g))}>WhatsApp</a><${Btn} onClick=${()=>setModal({k:'rc',m})}>Receipt<//><${Btn} onClick=${()=>setModal({k:'edit',m})}>Edit / Profile<//></div></div>`):h`<p className="text-center text-neutral-400 p-8">No members found.</p>`}</div>`}
- ${tab==='gate'&&h`<div><div className="flex gap-2"><input placeholder="Member ID (e.g. PF001)" value=${gid} onChange=${e=>setGid(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&gate()}/><${Btn} c="bg-orange-600" onClick=${gate}>Check<//></div>
+ ${tab==='gate'&&h`<div><div className="flex gap-2"><input placeholder="Member ID (e.g. PF001)" value=${gid} onChange=${e=>setGid(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&gate()}/><${Btn} c="bg-orange-600" onClick=${gate}>Check<//></div><${Btn} c="bg-neutral-700 w-full mt-2" onClick=${()=>{unlock();setCamErr('');setCam(!cam)}}>${cam?'Stop Camera Scanner':'Start Camera Scanner'}<//>${camErr&&h`<div className="text-sm text-amber-300 mt-2">${camErr}</div>`}${cam&&h`<div id="reader" className="w-full max-w-sm mx-auto mt-3 rounded-lg overflow-hidden"></div>`}
   <div className="text-xs text-neutral-400 my-2">Try: ${mine.slice(0,6).map(m=>h`<button key=${m.id} className="underline mr-2" onClick=${()=>setGid(m.id)}>${m.id}</button>`)}</div>
-  ${res&&h`<div className=${'rounded-2xl p-8 text-center mt-3 '+(res.bad?'flash':'bg-green-700')}><div className="text-5xl">${res.bad?'⛔':'✅'}</div><div className="text-2xl font-extrabold mt-2">${res.t}</div><div className="text-lg mt-1">${res.s}</div></div>`}</div>`}
+  ${res&&h`<div onClick=${()=>setRes(null)} className=${'fixed inset-0 z-50 grid content-center p-8 text-center '+(res.bad?'flash':'bg-green-700')}><div className="text-5xl">${res.bad?'⛔':'✅'}</div><div className="text-2xl font-extrabold mt-2">${res.t}</div><div className="text-lg mt-1">${res.s}</div></div>`}</div>`}
  ${tab==='lead'&&h`<div><${Btn} c="bg-orange-600 mb-3" onClick=${()=>setLead(!lead)}>+ Walk-in Inquiry<//>
   ${lead&&h`<form className="bg-neutral-900 border border-orange-600 rounded-xl p-3 mb-3 grid gap-2" onSubmit=${e=>{e.preventDefault();const f=new FormData(e.target);api.addLead({name:f.get('n'),phone:f.get('p'),note:f.get('o'),fu:f.get('d')});setLead(false)}}><input name="n" placeholder="Name" required/><input name="p" placeholder="Phone" required/><input name="o" placeholder="What did they ask about? (plan, timing)"/><input name="d" type="date" defaultValue=${addD(td,2)} required/><${Btn} c="bg-orange-600" type="submit">Save<//></form>`}
   ${ls.filter(l=>l.gid===g.id).sort((a,b)=>a.fu>b.fu?1:-1).map(l=>h`<div key=${l.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 mb-2"><b>${l.name}</b> <span className="text-sm text-neutral-400">${l.phone}</span><div className="text-sm">${l.note}</div><div className=${'text-sm '+(dl(l.fu)<0?'text-red-400':'text-amber-400')}>Follow-up: ${fd(l.fu)}${dl(l.fu)<0?' (overdue)':''}</div>
    <div className="flex gap-2 mt-2"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(l.phone,`Hello ${l.name}, thank you for visiting ${g.name}! This month only: 10% off our 3-month plan. Visit us today to join.`)}>WhatsApp Offer</a><${Btn} onClick=${()=>api.delLead(l.id)}>Delete<//></div></div>`)}</div>`}
- <nav className="fixed bottom-0 inset-x-0 bg-neutral-950 border-t border-neutral-800 grid grid-cols-4" style=${{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>${tabs.map(([k,i,l])=>h`<button key=${k} onClick=${()=>setTab(k)} className=${'py-2 text-xs '+(tab===k?'text-orange-500 font-bold':'text-neutral-400')}><div className="text-xl">${i}</div>${l}</button>`)}</nav>
- ${modal&&modal.k==='edit'&&h`<${MemberForm} m=${modal.m} onSave=${saveM} onClose=${()=>setModal(null)} pr=${pr} setPr=${api.addProg} pf=${pf} setPf=${setPf}/>`}
+ ${bq&&h`<${BulkQ} bq=${bq} setBq=${setBq} mine=${mine} g=${g}/>`}<nav className="fixed bottom-0 inset-x-0 bg-neutral-950 border-t border-neutral-800 grid grid-cols-4" style=${{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>${tabs.map(([k,i,l])=>h`<button key=${k} onClick=${()=>setTab(k)} className=${'py-2 text-xs '+(tab===k?'text-orange-500 font-bold':'text-neutral-400')}><div className="text-xl">${i}</div>${l}</button>`)}</nav>
+ ${modal&&modal.k==='edit'&&h`<${MemberForm} m=${modal.m} onSave=${saveM} onClose=${()=>setModal(null)} pr=${pr} setPr=${api.addProg} gname=${g.name} pf=${pf} setPf=${setPf}/>`}
  ${modal&&modal.k==='rc'&&h`<${Modal} title="Fee Receipt" onClose=${()=>setModal(null)}><div id="rc" className="bg-white text-black rounded-lg p-4"><div className="text-center font-extrabold text-xl">${g.name}</div><div className="text-center text-sm mb-3">Fee Receipt · ${fd(td)}</div>
   ${[['Member',modal.m.name+' ('+modal.m.id+')'],['Plan',modal.m.plan+(modal.m.plan>1?' months':' month')],['Valid till',fd(end(modal.m))],['Total fee',ru(modal.m.total)],['Amount paid',ru(modal.m.paid)],['Balance due',ru(due(modal.m))]].map(([a,b])=>h`<div key=${a} className="flex justify-between border-b py-1"><span>${a}</span><b>${b}</b></div>`)}<div className="text-center text-xs mt-3">Thank you!</div></div>
   <div className="flex gap-2 mt-3"><${Btn} c="bg-orange-600" onClick=${()=>{try{window.print()}catch(e){}}}>Print<//><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(modal.m.phone,`${g.name} – Fee Receipt\n${modal.m.name}\nPaid: ${ru(modal.m.paid)}\nBalance: ${ru(due(modal.m))}\nDate: ${fd(td)}`)}>Share on WhatsApp</a></div><//>`}
  </div>`}
 
-function MemberForm({m,onSave,onClose,pr,setPr,pf,setPf}){
+function MemberForm({m,onSave,onClose,pr,setPr,pf,setPf,gname}){
  const [f,setF]=useState(m),s=k=>e=>setF({...f,[k]:e.target.value}),mine=pr.filter(p=>p.mid===f.id).sort((a,b)=>a.date>b.date?1:-1);
+ const dlCard=async()=>{const b=await cardPng(gname,f),file=new File([b],f.id+'-card.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:'Your membership card'});return}catch(e){}}const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f.id+'-card.png';a.click()};
  const L=(t,c)=>h`<label className="block text-xs text-neutral-400">${t}${c}</label>`;
  return h`<${Modal} title=${f.id?'Edit / Profile':'New Member'} onClose=${onClose}><div className="grid grid-cols-2 gap-2">
   <div className="col-span-2">${L('Name',h`<input value=${f.name} onChange=${s('name')}/>`)}</div>
@@ -139,7 +182,7 @@ function MemberForm({m,onSave,onClose,pr,setPr,pf,setPf}){
   ${L('Paid (₹)',h`<input type="number" value=${f.paid} onChange=${s('paid')}/>`)}
   <div className="col-span-2 text-sm bg-neutral-800 rounded-lg p-2">End date: <b>${fd(addM(f.start,f.plan))}</b> · Pending due: <b className="text-amber-400">${ru((+f.total||0)-(+f.paid||0))}</b></div>
   <${Btn} c="bg-orange-600 col-span-2" onClick=${()=>onSave(f)}>Save<//></div>
-  ${f.id&&h`<div className="mt-4 border-t border-neutral-700 pt-3"><div className="flex gap-3 items-center"><${QR} v=${f.id} s=${96}/><div><div className="text-2xl font-extrabold">${f.id}</div><div className="text-xs text-neutral-400">Member QR badge (placeholder)</div></div></div>
+  ${f.id&&h`<div className="mt-4 border-t border-neutral-700 pt-3"><div className="flex gap-3 items-center"><${UpiQR} uri=${f.id} size=${120}/><div><div className="text-2xl font-extrabold">${f.id}</div><div className="text-xs text-neutral-400">Member QR badge</div><${Btn} c="bg-orange-600 mt-2" onClick=${dlCard}>Download QR Card<//></div></div>
    <div className="font-bold mt-3 mb-1">Body progress</div>${mine.map((p,i)=>h`<div key=${i} className="text-sm flex justify-between"><span>${fd(p.date)}</span><span>${p.wt} kg · BMI ${(p.wt/Math.pow(p.ht/100,2)).toFixed(1)}</span></div>`)}
    <div className="flex gap-2 mt-2"><input placeholder="Weight kg" type="number" value=${pf.wt} onChange=${e=>setPf({...pf,wt:e.target.value})}/><input placeholder="Height cm" type="number" value=${pf.ht} onChange=${e=>setPf({...pf,ht:e.target.value})}/><${Btn} c="bg-orange-600" onClick=${()=>{if(pf.wt&&pf.ht){setPr({uid:f.uid,wt:+pf.wt,ht:+pf.ht});setPf({wt:'',ht:pf.ht})}}}>Log<//></div></div>`}<//>`}
 
@@ -177,7 +220,7 @@ function App(){
   const R=await Promise.all(['members','inquiries','checkins','progress'].map(t=>sb.from(t).select('*').eq('gym_id',gg.id)));
   const bad=R.find(x=>x.error);if(bad)return fail(bad.error);
   const [mr,lr,cr,pg]=R.map(x=>x.data),code={};mr.forEach(x=>code[x.id]=x.code);
-  setMs(mr.map(x=>({uid:x.id,id:x.code,gid:x.gym_id,name:x.name,phone:x.phone,gender:x.gender,plan:x.plan_months,start:x.start_date,total:Number(x.total_fee),paid:Number(x.paid)})));
+  setMs(mr.map(x=>({uid:x.id,id:x.code,gid:x.gym_id,name:x.name,phone:x.phone,gender:x.gender||'M',plan:x.plan_months,start:x.start_date,total:Number(x.total_fee),paid:Number(x.paid)})));
   setLs(lr.map(x=>({id:x.id,gid:x.gym_id,name:x.name,phone:x.phone||'',note:x.note||'',fu:x.follow_up||td})));
   setCs(cr.map(x=>({mid:code[x.member_id],date:x.on_date})));
   setPr(pg.map(x=>({mid:code[x.member_id],date:x.on_date,wt:Number(x.weight),ht:Number(x.height)})))};
@@ -194,6 +237,12 @@ function App(){
    if(id){add=m.paid-(ms.find(x=>x.uid===id)||{paid:0}).paid;const r=await sb.from('members').update(row).eq('id',id);if(r.error)return fail(r.error)}
    else{row.code=g.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()+String(n+1+Math.floor(Math.random()*90)).padStart(3,'0');const r=await sb.from('members').insert(row).select('id').single();if(r.error)return fail(r.error);id=r.data.id}
    if(add>0){const r=await sb.from('payments').insert({gym_id:g.id,member_id:id,amount:add});if(r.error)return fail(r.error)}
+   await refresh();return true},
+  importRows:async(rows,mine)=>{const px=g.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();let n=Math.max(0,...mine.map(m=>parseInt(String(m.id).replace(/\D/g,''))||0));
+   const recs=rows.map(r=>({gym_id:g.id,code:px+String(++n).padStart(3,'0'),name:r.name,phone:r.phone,plan_months:r.plan,start_date:r.start,total_fee:r.total,paid:r.paid}));
+   for(let i=0;i<recs.length;i+=500){const ch=recs.slice(i,i+500),r=await sb.from('members').insert(ch).select('id,code');if(r.error)return fail(r.error);
+    const idm={};r.data.forEach(x=>idm[x.code]=x.id);const pay=ch.filter(x=>x.paid>0).map(x=>({gym_id:g.id,member_id:idm[x.code],amount:x.paid}));
+    if(pay.length){const pr=await sb.from('payments').insert(pay);if(pr.error)return fail(pr.error)}}
    await refresh();return true},
   addCheck:m=>q(sb.from('checkins').insert({gym_id:g.id,member_id:m.uid})),
   addLead:o=>q(sb.from('inquiries').insert({gym_id:g.id,name:o.name,phone:o.phone,note:o.note,follow_up:o.fu})),
