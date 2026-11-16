@@ -117,8 +117,8 @@ function Owner({g,ms,ls,cs,pr,api,setTab,tab,modal,setModal}){
  const bars=[[38,22],[45,25],[41,30],[52,28],[48,31],[60,34]].map(([a,b])=>[a*Math.max(1,mine.length/4)*1000|0,b*Math.max(1,mine.length/4)*1000|0]),mx=Math.max(...bars.map(b=>b[0]));
  const mon=[5,4,3,2,1,0].map(i=>new Date(T().getFullYear(),T().getMonth()-i,1).toLocaleString('en',{month:'short'}));
  const newM=()=>setModal({k:'edit',m:{id:'',gid:g.id,name:'',phone:'',gender:'M',plan:1,start:td,total:'',paid:''}});
- const saveM=m=>{m={...m,total:+m.total||0,paid:+m.paid||0,plan:+m.plan};if(!m.name||String(m.phone).replace(/\D/g,'').length<10){alert('Name and a 10-digit phone number are required.');return}
-  api.saveMember(m,mine.length).then(ok=>ok&&setModal(null))};
+ const saveM=m=>{m={...m,total:+m.total||0,paid:+m.paid||0,plan:+m.plan,phone:String(m.phone).replace(/\D/g,'').slice(-10)};if(!m.name||String(m.phone).replace(/\D/g,'').length<10){alert('Name and a 10-digit phone number are required.');return}
+  return api.saveMember(m,mine.length).then(r=>{if(r===true)setModal(null);return r})};
  const check=code=>{const c=String(code).trim().toLowerCase(),m=mine.find(x=>x.id.toLowerCase()===c);let r;
   if(!m)r={bad:1,t:'Member not found',s:'Please check the ID and try again'};
   else{const s=st(m);if(s==='ok'){api.addCheck(m);r={t:`Welcome ${m.name}! Access Granted.`,s:`Days Left: ${dl(end(m))}`}}
@@ -127,19 +127,22 @@ function Owner({g,ms,ls,cs,pr,api,setTab,tab,modal,setModal}){
  gref.current=check;const gate=()=>check(gid);
  const dueList=()=>mine.filter(m=>due(m)>0||dl(end(m))<=7).sort((a,b)=>end(a)>end(b)?1:-1);
  const startBulk=()=>{const l=dueList();if(!l.length){setImp('No members need a reminder right now.');return}setBq({ids:l.map(m=>m.id),i:0})};
+ const delM=m=>{if(confirm(`Are you sure you want to delete ${m.name}? This will also remove their payment and attendance records.`))api.delMember(m.uid)};
  const sampleCsv=()=>{const t='Name,Phone,Plan Months,Start Date,Total Fee,Paid\nRahul Verma,9876543210,3,'+td+',6000,6000\nPriya Singh,9876543211,1,'+td+',1500,1000\n';const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='gympro-sample-members.csv';a.click()};
  const onFile=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const rd=new FileReader();rd.onload=async()=>{
   const rows=parseCsv(String(rd.result));if(rows.length<2){setImp('The file is empty or has no data rows.');return}
   const hd=rows[0].map(x=>x.trim().toLowerCase().replace(/[^a-z]/g,'')),ix=k=>hd.indexOf(k),ci={n:ix('name'),p:ix('phone'),m:ix('planmonths'),s:ix('startdate'),t:ix('totalfee'),d:ix('paid')};
   if(Object.values(ci).some(v=>v<0)){setImp('Columns must be: Name, Phone, Plan Months, Start Date, Total Fee, Paid. Use Download Sample CSV.');return}
-  const have=new Set(mine.map(m=>m.phone)),good=[],bad=[];
+  const have=await api.phones();if(!have){setImp('Import failed. See the error at the top of the page.');return}
+  const good=[],bad=[],dups=[];
   rows.slice(1).forEach((r,k)=>{const ph=String(r[ci.p]||'').replace(/\D/g,'').slice(-10),pm=+r[ci.m],sd=normDate(r[ci.s]),nm=(r[ci.n]||'').trim();
-   if(!nm||ph.length<10||![1,3,6,12].includes(pm)||!sd||have.has(ph)){bad.push(k+2);return}
+   if(!nm||ph.length<10||![1,3,6,12].includes(pm)||!sd){bad.push(k+2);return}
+   if(have.has(ph)){dups.push(k+2);return}
    have.add(ph);good.push({name:nm,phone:ph,plan:pm,start:sd,total:+r[ci.t]||0,paid:+r[ci.d]||0})});
-  if(!good.length){setImp('No valid rows found. Skipped rows: '+bad.slice(0,15).join(', '));return}
+  if(!good.length){setImp(`Imported 0 new members. Skipped ${dups.length} duplicate entries.`+(bad.length?` ${bad.length} invalid row(s) were also skipped (rows: ${bad.slice(0,15).join(', ')}).`:''));return}
   setImp('Importing '+good.length+' members...');
   const ok=await api.importRows(good,mine);
-  setImp(ok?`Imported ${good.length} members.`+(bad.length?` Skipped ${bad.length} invalid or duplicate row(s): ${bad.slice(0,15).join(', ')}${bad.length>15?'...':''}`:''):'Import failed. See the error at the top of the page.')};
+  setImp(ok?`Imported ${good.length} new members. Skipped ${dups.length} duplicate entries.`+(bad.length?` ${bad.length} invalid row(s) were also skipped (rows: ${bad.slice(0,15).join(', ')}${bad.length>15?'...':''}).`:''):'Import failed. See the error at the top of the page.')};
   rd.readAsText(f)};
  const tabs=[['dash','🏠','Home'],['mem','👥','Members'],['gate','📷','Gate'],['lead','📝','Leads']];
  const sub=dl(g.exp);
@@ -153,14 +156,14 @@ function Owner({g,ms,ls,cs,pr,api,setTab,tab,modal,setModal}){
   <div className="flex gap-2 mb-3 overflow-x-auto">${[['all','All'],['due','Fees due'],['soon','Expiring in 7 days'],['expired','Expired']].map(([k,l])=>h`<button key=${k} onClick=${()=>setFlt(k)} className=${'px-3 py-1 rounded-full text-sm whitespace-nowrap '+(flt===k?'bg-orange-600':'bg-neutral-800')}>${l}</button>`)}</div>
   ${list.length?list.map(m=>h`<div key=${m.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 mb-2"><div className="flex justify-between"><div><b>${m.name}</b> <span className="text-xs text-neutral-400">${m.id}</span></div><${Badge} s=${st(m)}/></div>
    <div className="text-sm text-neutral-400">${m.phone} · Expiry ${fd(end(m))}${due(m)>0?' · Due '+ru(due(m)):''}</div>
-   <div className="flex gap-2 mt-2 flex-wrap"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(m.phone,remind(m,g))}>WhatsApp</a><${Btn} onClick=${()=>setModal({k:'rc',m})}>Receipt<//><${Btn} onClick=${()=>setModal({k:'edit',m})}>Edit / Profile<//></div></div>`):h`<p className="text-center text-neutral-400 p-8">No members found.</p>`}</div>`}
+   <div className="flex gap-2 mt-2 flex-wrap"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(m.phone,remind(m,g))}>WhatsApp</a><${Btn} onClick=${()=>setModal({k:'rc',m})}>Receipt<//><${Btn} onClick=${()=>setModal({k:'edit',m})}>Edit / Profile<//><${Btn} c="bg-red-700" onClick=${()=>delM(m)}>🗑 Delete<//></div></div>`):h`<p className="text-center text-neutral-400 p-8">No members found.</p>`}</div>`}
  ${tab==='gate'&&h`<div><div className="flex gap-2"><input placeholder="Member ID (e.g. PF001)" value=${gid} onChange=${e=>setGid(e.target.value)} onKeyDown=${e=>e.key==='Enter'&&gate()}/><${Btn} c="bg-orange-600" onClick=${gate}>Check<//></div><${Btn} c="bg-neutral-700 w-full mt-2" onClick=${()=>{unlock();setCamErr('');setCam(!cam)}}>${cam?'Stop Camera Scanner':'Start Camera Scanner'}<//>${camErr&&h`<div className="text-sm text-amber-300 mt-2">${camErr}</div>`}${cam&&h`<div id="reader" className="w-full max-w-sm mx-auto mt-3 rounded-lg overflow-hidden"></div>`}
   <div className="text-xs text-neutral-400 my-2">Try: ${mine.slice(0,6).map(m=>h`<button key=${m.id} className="underline mr-2" onClick=${()=>setGid(m.id)}>${m.id}</button>`)}</div>
   ${res&&h`<div onClick=${()=>setRes(null)} className=${'fixed inset-0 z-50 grid content-center p-8 text-center '+(res.bad?'flash':'bg-green-700')}><div className="text-5xl">${res.bad?'⛔':'✅'}</div><div className="text-2xl font-extrabold mt-2">${res.t}</div><div className="text-lg mt-1">${res.s}</div></div>`}</div>`}
  ${tab==='lead'&&h`<div><${Btn} c="bg-orange-600 mb-3" onClick=${()=>setLead(!lead)}>+ Walk-in Inquiry<//>
   ${lead&&h`<form className="bg-neutral-900 border border-orange-600 rounded-xl p-3 mb-3 grid gap-2" onSubmit=${e=>{e.preventDefault();const f=new FormData(e.target);api.addLead({name:f.get('n'),phone:f.get('p'),note:f.get('o'),fu:f.get('d')});setLead(false)}}><input name="n" placeholder="Name" required/><input name="p" placeholder="Phone" required/><input name="o" placeholder="What did they ask about? (plan, timing)"/><input name="d" type="date" defaultValue=${addD(td,2)} required/><${Btn} c="bg-orange-600" type="submit">Save<//></form>`}
   ${ls.filter(l=>l.gid===g.id).sort((a,b)=>a.fu>b.fu?1:-1).map(l=>h`<div key=${l.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 mb-2"><b>${l.name}</b> <span className="text-sm text-neutral-400">${l.phone}</span><div className="text-sm">${l.note}</div><div className=${'text-sm '+(dl(l.fu)<0?'text-red-400':'text-amber-400')}>Follow-up: ${fd(l.fu)}${dl(l.fu)<0?' (overdue)':''}</div>
-   <div className="flex gap-2 mt-2"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(l.phone,`Hello ${l.name}, thank you for visiting ${g.name}! This month only: 10% off our 3-month plan. Visit us today to join.`)}>WhatsApp Offer</a><${Btn} onClick=${()=>api.delLead(l.id)}>Delete<//></div></div>`)}</div>`}
+   <div className="flex gap-2 mt-2"><a className="bg-green-600 px-3 py-2 rounded-lg text-sm font-semibold" target="_blank" rel="noopener" href=${wa(l.phone,`Hello ${l.name}, thank you for visiting ${g.name}! This month only: 10% off our 3-month plan. Visit us today to join.`)}>WhatsApp Offer</a><${Btn} c="bg-red-700" onClick=${()=>{if(confirm('Delete the inquiry from '+l.name+'?'))api.delLead(l.id)}}>🗑 Delete<//></div></div>`)}</div>`}
  ${bq&&h`<${BulkQ} bq=${bq} setBq=${setBq} mine=${mine} g=${g}/>`}<nav className="fixed bottom-0 inset-x-0 bg-neutral-950 border-t border-neutral-800 grid grid-cols-4" style=${{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>${tabs.map(([k,i,l])=>h`<button key=${k} onClick=${()=>setTab(k)} className=${'py-2 text-xs '+(tab===k?'text-orange-500 font-bold':'text-neutral-400')}><div className="text-xl">${i}</div>${l}</button>`)}</nav>
  ${modal&&modal.k==='edit'&&h`<${MemberForm} m=${modal.m} onSave=${saveM} onClose=${()=>setModal(null)} pr=${pr} setPr=${api.addProg} gname=${g.name} pf=${pf} setPf=${setPf}/>`}
  ${modal&&modal.k==='rc'&&h`<${Modal} title="Fee Receipt" onClose=${()=>setModal(null)}><div id="rc" className="bg-white text-black rounded-lg p-4"><div className="text-center font-extrabold text-xl">${g.name}</div><div className="text-center text-sm mb-3">Fee Receipt · ${fd(td)}</div>
@@ -169,7 +172,7 @@ function Owner({g,ms,ls,cs,pr,api,setTab,tab,modal,setModal}){
  </div>`}
 
 function MemberForm({m,onSave,onClose,pr,setPr,pf,setPf,gname}){
- const [f,setF]=useState(m),s=k=>e=>setF({...f,[k]:e.target.value}),mine=pr.filter(p=>p.mid===f.id).sort((a,b)=>a.date>b.date?1:-1);
+ const [dup,setDup]=useState(''),[f,setF]=useState(m),s=k=>e=>setF({...f,[k]:e.target.value}),mine=pr.filter(p=>p.mid===f.id).sort((a,b)=>a.date>b.date?1:-1);
  const dlCard=async()=>{const b=await cardPng(gname,f),file=new File([b],f.id+'-card.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:'Your membership card'});return}catch(e){}}const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f.id+'-card.png';a.click()};
  const L=(t,c)=>h`<label className="block text-xs text-neutral-400">${t}${c}</label>`;
  return h`<${Modal} title=${f.id?'Edit / Profile':'New Member'} onClose=${onClose}><div className="grid grid-cols-2 gap-2">
@@ -181,7 +184,7 @@ function MemberForm({m,onSave,onClose,pr,setPr,pf,setPf,gname}){
   ${L('Total fee (₹)',h`<input type="number" value=${f.total} onChange=${s('total')}/>`)}
   ${L('Paid (₹)',h`<input type="number" value=${f.paid} onChange=${s('paid')}/>`)}
   <div className="col-span-2 text-sm bg-neutral-800 rounded-lg p-2">End date: <b>${fd(addM(f.start,f.plan))}</b> · Pending due: <b className="text-amber-400">${ru((+f.total||0)-(+f.paid||0))}</b></div>
-  <${Btn} c="bg-orange-600 col-span-2" onClick=${()=>onSave(f)}>Save<//></div>
+  ${dup&&h`<div className="col-span-2 bg-red-900 border border-red-500 text-red-100 rounded-lg p-3 text-sm font-semibold">${dup}</div>`}<${Btn} c="bg-orange-600 col-span-2" onClick=${async()=>{setDup('');const r=await onSave(f);if(r&&r.dup)setDup(r.dup)}}>Save<//></div>
   ${f.id&&h`<div className="mt-4 border-t border-neutral-700 pt-3"><div className="flex gap-3 items-center"><${UpiQR} uri=${f.id} size=${120}/><div><div className="text-2xl font-extrabold">${f.id}</div><div className="text-xs text-neutral-400">Member QR badge</div><${Btn} c="bg-orange-600 mt-2" onClick=${dlCard}>Download QR Card<//></div></div>
    <div className="font-bold mt-3 mb-1">Body progress</div>${mine.map((p,i)=>h`<div key=${i} className="text-sm flex justify-between"><span>${fd(p.date)}</span><span>${p.wt} kg · BMI ${(p.wt/Math.pow(p.ht/100,2)).toFixed(1)}</span></div>`)}
    <div className="flex gap-2 mt-2"><input placeholder="Weight kg" type="number" value=${pf.wt} onChange=${e=>setPf({...pf,wt:e.target.value})}/><input placeholder="Height cm" type="number" value=${pf.ht} onChange=${e=>setPf({...pf,ht:e.target.value})}/><${Btn} c="bg-orange-600" onClick=${()=>{if(pf.wt&&pf.ht){setPr({uid:f.uid,wt:+pf.wt,ht:+pf.ht});setPf({wt:'',ht:pf.ht})}}}>Log<//></div></div>`}<//>`}
@@ -234,6 +237,9 @@ function App(){
  const q=async p=>{const r=await p;if(r.error)return fail(r.error);await refresh();return true};
  const api={
   saveMember:async(m,n)=>{const row={gym_id:g.id,name:m.name,phone:m.phone,gender:m.gender,plan_months:m.plan,start_date:m.start,total_fee:m.total,paid:m.paid};let id=m.uid,add=m.paid;
+   let dq=sb.from('members').select('id,name,phone').eq('gym_id',g.id).like('phone','%'+m.phone);if(m.uid)dq=dq.neq('id',m.uid);
+   const dd=await dq.limit(1);if(dd.error)return fail(dd.error);
+   if(dd.data.length)return{dup:`Duplicate Detected! A member with phone ${m.phone} (${dd.data[0].name}) already exists.`};
    if(id){add=m.paid-(ms.find(x=>x.uid===id)||{paid:0}).paid;const r=await sb.from('members').update(row).eq('id',id);if(r.error)return fail(r.error)}
    else{row.code=g.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()+String(n+1+Math.floor(Math.random()*90)).padStart(3,'0');const r=await sb.from('members').insert(row).select('id').single();if(r.error)return fail(r.error);id=r.data.id}
    if(add>0){const r=await sb.from('payments').insert({gym_id:g.id,member_id:id,amount:add});if(r.error)return fail(r.error)}
@@ -246,7 +252,9 @@ function App(){
    await refresh();return true},
   addCheck:m=>q(sb.from('checkins').insert({gym_id:g.id,member_id:m.uid})),
   addLead:o=>q(sb.from('inquiries').insert({gym_id:g.id,name:o.name,phone:o.phone,note:o.note,follow_up:o.fu})),
-  delLead:id=>q(sb.from('inquiries').delete().eq('id',id)),
+  delLead:async id=>{const r=await sb.from('inquiries').delete().eq('id',id).select('id');if(r.error)return fail(r.error);if(!r.data.length)return fail({message:'Could not delete. Your subscription may be locked.'});await refresh();return true},
+  delMember:async uid=>{const r=await sb.from('members').delete().eq('id',uid).select('id');if(r.error)return fail(r.error);if(!r.data.length)return fail({message:'Could not delete. Your subscription may be locked.'});await refresh();return true},
+  phones:async()=>{const set=new Set();for(let i=0;;i+=1000){const r=await sb.from('members').select('phone').eq('gym_id',g.id).range(i,i+999);if(r.error){fail(r.error);return null}r.data.forEach(x=>set.add(String(x.phone).replace(/\D/g,'').slice(-10)));if(r.data.length<1000)break}return set},
   addProg:o=>q(sb.from('progress').insert({gym_id:g.id,member_id:o.uid,weight:o.wt,height:o.ht})),
   extend:id=>q(sb.rpc('admin_extend',{gid:id})),
   lock:(id,v)=>q(sb.rpc('admin_set_lock',{gid:id,lock:v}))};
